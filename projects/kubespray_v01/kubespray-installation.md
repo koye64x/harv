@@ -84,7 +84,7 @@ ssh_authorized_keys:
 
 </details>
 
-Network Data
+Network Data: [cloud-init-network-data.yaml](vm/cloud-init-network-data.yaml)
 
 <details>
     <summary>Развернуть</summary>
