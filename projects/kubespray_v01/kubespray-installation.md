@@ -12,6 +12,9 @@
 
 ### Перечень витруальных машин
 
+<details>
+    <summary>Развернуть</summary>
+
 | #   | Имя ВМ              | Назначение       | Имя хоста           | IP           |
 |-----|---------------------|------------------|---------------------|--------------|
 | 1   | kubespray-installer | ВМ для установки | kubespray-installer | -            |
@@ -22,7 +25,12 @@
 | 6   | kubespray-worker2   | Рабочая нода 2   | kubespray-master2   | 192.168.1.52 |
 | 7   | kubespray-worker3   | Рабочая нода 3   | kubespray-master3   | 192.168.1.53 |
 
+</details>
+
 ### Параметры ВМ
+
+<details>
+    <summary>Развернуть</summary>
 
 | # | Параметр | Значение   |
 |---|----------|------------|
@@ -32,6 +40,8 @@
 | 4 | Volume 1 | Образ ОС   |
 | 5 | Volume 2 | Диск 30 ГБ |
 | 6 | Network | default/dhcp |
+
+</details>
 
 #### Настройки cloud-init
 
