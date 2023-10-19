@@ -3,12 +3,17 @@
 ## Установка Harvester
 
 Имя хоста: homeharv
+
 DNS: 192.168.1.1
+
 VIP: 192.168.1.14
+
 Cluster token: cluster_token
+
 Password: 360510
 
 Harvester admin: admin
+
 password: VeI0dhBdw9R59umC
 
 ## Настройка после установки

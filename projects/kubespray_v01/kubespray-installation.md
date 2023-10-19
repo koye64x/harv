@@ -2,7 +2,7 @@
 
 ## Предварительная настройка Harvester
 
-Добавить namespace kubespray
+Добавить namespace `kubespray`
 
 Загрузить образ ОС cloud-версию https://cloud-images.ubuntu.com/jammy/current/
 
@@ -35,7 +35,7 @@
 
 #### Настройки cloud-init
 
-User Data: [cloud-init-user-data.yaml](/vm/cloud-init-user-data.yaml)
+User Data: [cloud-init-user-data.yaml](vm/cloud-init-user-data.yaml)
 
 <details>
     <summary>Развернуть</summary>
