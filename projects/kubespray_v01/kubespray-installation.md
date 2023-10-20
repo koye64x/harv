@@ -17,7 +17,7 @@
 
 | #   | Имя ВМ              | Назначение       | Имя хоста           | IP           |
 |-----|---------------------|------------------|---------------------|--------------|
-| 1   | kubespray-installer | ВМ для установки | kubespray-installer | -            |
+| 1   | kubespray-installer | ВМ для установки | kubespray-installer | 192.168.1.40 |
 | 2   | kubespray-master1   | Мастер нода 1    | kubespray-master1   | 192.168.1.41 |
 | 3   | kubespray-master2   | Мастер нода 2    | kubespray-master2   | 192.168.1.42 |
 | 4   | kubespray-master3   | Мастер нода 3    | kubespray-master3   | 192.168.1.43 |
@@ -116,3 +116,8 @@ network:
 ```
 
 </details>
+
+## Установка Ansible
+
+Производится на ВМ kubespray-installer
+
