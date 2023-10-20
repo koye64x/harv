@@ -114,10 +114,173 @@ network:
         addresses:
           - 192.168.1.1
 ```
-
 </details>
 
-## Установка Ansible
+### Копирование ключей SSH на все ноды
+
+```shell
+ssh-copy-id root@192.168.1.41
+ssh-copy-id root@192.168.1.42
+ssh-copy-id root@192.168.1.43
+ssh-copy-id root@192.168.1.51
+ssh-copy-id root@192.168.1.52
+ssh-copy-id root@192.168.1.53
+```
+Вывод после корректного копирования ключа
+
+```shell
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/user/.ssh/id_rsa.pub"
+The authenticity of host '192.168.1.113 (192.168.1.113)' can't be established.
+ECDSA key fingerprint is SHA256:LW71tkO0B4nqhF/MEqVZ5OloTGka/MG8YWd+xrdnffk.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@192.168.1.113's password:
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@192.168.1.113'"
+and check to make sure that only the key(s) you wanted were added.
+```
+## Установка Kubespray
 
 Производится на ВМ kubespray-installer
+
+Источник: https://youtu.be/yyBFNcPyAk0?list=PLsMIccp52YRtEr4EallcVRlCaEt61oRzl
+
+### Установка python3
+
+Источник https://phoenixnap.com/kb/how-to-install-python-3-ubuntu
+
+```shell
+sudo apt update
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.8
+
+# Установить пакетный менеджер pip
+sudo apt install python3-pip
+
+# Установить virtualenv — это инструмент для создания изолированной среды Python
+sudo apt install python3-virtualenv
+```
+
+### Клонирование проекта Kubespray с GitHub
+
+```shell
+# клонировать проект
+git clone https://github.com/kubernetes-sigs/kubespray.git
+cd kubespray/
+# переход на последний стабильный релиз 
+git checkout -b v2.20.0 tags/v2.20.0
+# версия примера 2.12
+# git checkout -b v2.12.0 tags/v2.12.0
+
+# Смотреть список необходимых пакетов
+cat ./requirements.txt
+
+# Установка этих пакетов в виртуальном окружении python
+virtualenv venv-kubespray
+
+# активация виртуального окружения
+source ./venv-kubespray/bin/activate
+
+# Установить пакеты
+pip install -r ./requirements.txt
+
+```
+
+### Настройка конфигурации кластера
+
+```shell
+# Создание папки конфигурации из sample. (папка задана как kube001)
+cp -a ./inventory/sample/ ./inventory/kube001
+# Эту директорию (./inventory/kube001) нужно сохранить в VCS
+# На github.com создать репозиторий 
+# выполнить команды из подсказки на странице guthub после создания репозитория
+
+# задать конфигурацию кластера (ноды) в файле inventory/kube001/inventory.ini
+# шаблон в файле kube001_inventory.ini
+
+# в файле kubespray/inventory/kube001/group_vars/k8s_cluster/k8s-cluster.yml
+# установить параметр supplementary_addresses_in_ssl_keys (примерно строка 280)
+supplementary_addresses_in_ssl_keys: [lb.koye.kz]
+```
+
+### Проверка конфигурации
+
+```shell
+# проверить инфраструктуру нод, указанных в файле конфигурации inventory.ini можно запустить команду
+ansible -i inventory/kube001/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
+
+ansible -i inventory/kube212/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
+
+!!!ОШИБКА ImportError: cannot import name 'soft_unicode' from 'markupsafe' (/home/user/kubespray/venv-kubespray/lib/python3.8/site-packages/markupsafe/__init__.py)
+https://stackoverflow.com/questions/72191560/importerror-cannot-import-name-soft-unicode-from-markupsafe
+
+ansible -i ../kube212/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
+```
+
+### Развертываение нод кластера
+
+```shell
+# команда применения playbook ansible к нодам
+ansible-playbook -i inventory/kube001/inventory.ini --private-key ~/.ssh/id_rsa --user root --become --become-user=root cluster.yml
+
+ansible-playbook -i ../kube212/inventory.ini --private-key ~/.ssh/id_rsa --user root --become --become-user=root cluster.yml
+
+# Установка kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod a+x kubectl
+sudo mv ./kubectl /usr/bin/kubectl
+
+# скачать файл конфигурации с мастера и задать значение переменной окружения для файла
+scp root@192.168.1.101:/etc/kubernetes/admin.conf /home/user/admin.conf
+# в файле установить IP адрес master1 "server: https://192.168.1.101:6443" (строка 5)
+# порт 6443 это порт Kubernetes API
+
+# переменная окружения необходима, что бы kubectl мог подключаться к кластеру Kubernetes
+export KUBECONFIG=/home/user/admin.conf
+```
+
+### Проверка настройки
+
+```shell
+# проверка настроек
+kubectl version
+
+WARNING: This version information is deprecated and will be replaced with the output from kubectl version --short.  Use --output=yaml|json to get the full version.
+Client Version: version.Info{Major:"1", Minor:"25", GitVersion:"v1.25.3", GitCommit:"434bfd82814af038ad94d62ebe59b133fcb50506", GitTreeState:"clean", BuildDate:"2022-10-12T10:57:26Z", GoVersion:"go1.19.2", Compiler:"gc", Platform:"linux/amd64"}
+Kustomize Version: v4.5.7
+Server Version: version.Info{Major:"1", Minor:"24", GitVersion:"v1.24.6", GitCommit:"b39bf148cd654599a52e867485c02c4f9d28b312", GitTreeState:"clean", BuildDate:"2022-09-21T13:12:04Z", GoVersion:"go1.18.6", Compiler:"gc", Platform:"linux/amd64"}
+
+# проверка нод
+kubectl get nodes -o wide
+
+NAME      STATUS   ROLES           AGE   VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+master1   Ready    control-plane   10h   v1.24.6   192.168.1.101   <none>        Ubuntu 20.04.5 LTS   5.4.0-131-generic   containerd://1.6.8
+master2   Ready    control-plane   10h   v1.24.6   192.168.1.102   <none>        Ubuntu 20.04.5 LTS   5.4.0-131-generic   containerd://1.6.8
+master3   Ready    control-plane   10h   v1.24.6   192.168.1.103   <none>        Ubuntu 20.04.5 LTS   5.4.0-131-generic   containerd://1.6.8
+node1     Ready    <none>          10h   v1.24.6   192.168.1.111   <none>        Ubuntu 20.04.5 LTS   5.4.0-131-generic   containerd://1.6.8
+node2     Ready    <none>          10h   v1.24.6   192.168.1.112   <none>        Ubuntu 20.04.5 LTS   5.4.0-131-generic   containerd://1.6.8
+node3     Ready    <none>          10h   v1.24.6   192.168.1.113   <none>        Ubuntu 20.04.5 LTS   5.4.0-131-generic   containerd://1.6.8
+
+# вывод пространств имен
+kubectl get namespaces
+
+# просмотр контейнеров Docker на мастер-нодах https://youtu.be/yeVQj7GuKkE?list=PLsMIccp52YRtEr4EallcVRlCaEt61oRzl&t=549
+# для примера на master1
+ssh root@192.168.1.101
+
+[root@master1 ~]# docker ps
+
+# Docker не найден, так как менеджер контейнеров по умолчанию containerd 
+# (файл kube001/group_vars/k8s_cluster/k8s-cluster.yml строка 221 "container_manager: containerd")
+# Пример установки приведен для версии 2.12 у которой менеджер контейнеров по умолчанию - docker
+```
+
+## Использование кластера
+
+Поднятие ПОДа Redis для примера https://youtu.be/yeVQj7GuKkE?list=PLsMIccp52YRtEr4EallcVRlCaEt61oRzl&t=1145
 
