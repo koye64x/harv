@@ -119,6 +119,10 @@ network:
 ### Копирование ключей SSH на все ноды
 
 ```shell
+# сгенерировать SSH ключ
+# не задавать passphrase
+ssh-keygen
+# скопировать ключ на ноды
 ssh-copy-id root@192.168.1.41
 ssh-copy-id root@192.168.1.42
 ssh-copy-id root@192.168.1.43
