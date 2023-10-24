@@ -152,19 +152,15 @@ and check to make sure that only the key(s) you wanted were added.
 
 Источник: https://youtu.be/yyBFNcPyAk0?list=PLsMIccp52YRtEr4EallcVRlCaEt61oRzl
 
-### Установка python3
+### Установка python3.11
 
-Источник https://phoenixnap.com/kb/how-to-install-python-3-ubuntu
+Источник https://opencentr.ru/article/kak-ustanovit-python-311-v-ubuntu-2204/
 
 ```shell
-sudo apt update
-sudo apt install software-properties-common
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
-sudo apt install python3.8
-
-# Установить пакетный менеджер pip
-sudo apt install python3-pip
+#Установка вместе с pip, IDE
+sudo apt install python3.11-full 
 
 # Установить virtualenv — это инструмент для создания изолированной среды Python
 sudo apt install python3-virtualenv
@@ -174,10 +170,10 @@ sudo apt install python3-virtualenv
 
 ```shell
 # клонировать проект
-git clone https://github.com/kubernetes-sigs/kubespray.git
-cd kubespray/
+git clone https://github.com/koye64x/kubespray-fork.git
+cd kubespray-fork/
 # переход на последний стабильный релиз 
-git checkout -b v2.20.0 tags/v2.20.0
+# git checkout -b v2.20.0 tags/v2.20.0
 # версия примера 2.12
 # git checkout -b v2.12.0 tags/v2.12.0
 
@@ -192,15 +188,14 @@ source ./venv-kubespray/bin/activate
 
 # Установить пакеты
 pip install -r ./requirements.txt
-
 ```
 
 ### Настройка конфигурации кластера
 
 ```shell
 # Создание папки конфигурации из sample. (папка задана как kube001)
-cp -a ./inventory/sample/ ./inventory/kube001
-# Эту директорию (./inventory/kube001) нужно сохранить в VCS
+#cp -a ./inventory/sample/ ./inventory/harvester
+# Эту директорию (./inventory/harvester) нужно сохранить в VCS
 # На github.com создать репозиторий 
 # выполнить команды из подсказки на странице guthub после создания репозитория
 
@@ -209,30 +204,23 @@ cp -a ./inventory/sample/ ./inventory/kube001
 
 # в файле kubespray/inventory/kube001/group_vars/k8s_cluster/k8s-cluster.yml
 # установить параметр supplementary_addresses_in_ssl_keys (примерно строка 280)
-supplementary_addresses_in_ssl_keys: [lb.koye.kz]
+#supplementary_addresses_in_ssl_keys: [lb.koye.kz]
 ```
 
 ### Проверка конфигурации
 
 ```shell
 # проверить инфраструктуру нод, указанных в файле конфигурации inventory.ini можно запустить команду
-ansible -i inventory/kube001/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
+ansible -i inventory/harvester/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
 
-ansible -i inventory/kube212/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
-
-!!!ОШИБКА ImportError: cannot import name 'soft_unicode' from 'markupsafe' (/home/user/kubespray/venv-kubespray/lib/python3.8/site-packages/markupsafe/__init__.py)
-https://stackoverflow.com/questions/72191560/importerror-cannot-import-name-soft-unicode-from-markupsafe
-
-ansible -i ../kube212/inventory.ini all -m shell -a 'w' --private-key ~/.ssh/id_rsa --user root --become --become-user=root
 ```
 
 ### Развертываение нод кластера
 
 ```shell
 # команда применения playbook ansible к нодам
-ansible-playbook -i inventory/kube001/inventory.ini --private-key ~/.ssh/id_rsa --user root --become --become-user=root cluster.yml
-
-ansible-playbook -i ../kube212/inventory.ini --private-key ~/.ssh/id_rsa --user root --become --become-user=root cluster.yml
+ansible-playbook -i inventory/harvester/inventory.ini --private-key ~/.ssh/id_rsa --user root --become --become-user=root cluster.yml
+# если после установки не все ноды поднялись запустить еще раз
 
 # Установка kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -240,7 +228,7 @@ chmod a+x kubectl
 sudo mv ./kubectl /usr/bin/kubectl
 
 # скачать файл конфигурации с мастера и задать значение переменной окружения для файла
-scp root@192.168.1.101:/etc/kubernetes/admin.conf /home/user/admin.conf
+scp root@192.168.1.41:/etc/kubernetes/admin.conf /home/user/admin.conf
 # в файле установить IP адрес master1 "server: https://192.168.1.101:6443" (строка 5)
 # порт 6443 это порт Kubernetes API
 
@@ -272,16 +260,6 @@ node3     Ready    <none>          10h   v1.24.6   192.168.1.113   <none>       
 
 # вывод пространств имен
 kubectl get namespaces
-
-# просмотр контейнеров Docker на мастер-нодах https://youtu.be/yeVQj7GuKkE?list=PLsMIccp52YRtEr4EallcVRlCaEt61oRzl&t=549
-# для примера на master1
-ssh root@192.168.1.101
-
-[root@master1 ~]# docker ps
-
-# Docker не найден, так как менеджер контейнеров по умолчанию containerd 
-# (файл kube001/group_vars/k8s_cluster/k8s-cluster.yml строка 221 "container_manager: containerd")
-# Пример установки приведен для версии 2.12 у которой менеджер контейнеров по умолчанию - docker
 ```
 
 ## Использование кластера
